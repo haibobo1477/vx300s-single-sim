@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="vx300s">
   <material name="interbotix_black">
-    <texture filename="package://vx300s_description/vx300s_meshes/interbotix_black.png"/>
+    <texture filename="file:///home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/interbotix_black.png"/>
   </material>
   <!-- use_world_frame -->
-<xacro:macro name="base_link">
+<xacro:macro name="vx300s">
 
  <link name="vx300s/base_link">
      <visual>
        <origin rpy="0 0 1.5707963267948966" xyz="0 0 0"/>
        <geometry>
-         <mesh filename="package://vx300s_description/vx300s_meshes/base.stl" scale="0.001 0.001 0.001"/>
+         <mesh filename="file:///home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/base.stl" scale="0.001 0.001 0.001"/>
        </geometry>
        <material name="interbotix_black"/>
      </visual>
      <collision>
        <origin rpy="0 0 1.5707963267948966" xyz="0 0 0"/>
        <geometry>
-         <mesh filename="package://vx300s_description/vx300s_meshes/base.stl" scale="0.001 0.001 0.001"/>
+         <mesh filename="file:///home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/base.stl" scale="0.001 0.001 0.001"/>
        </geometry>
      </collision>
      <inertial>
@@ -37,25 +37,18 @@
  </joint>
 
 
-</xacro:macro>
-  
-
-  
-<xacro:macro name="shoulder_link">
-
-
   <link name="vx300s/shoulder_link">
     <visual>
       <origin rpy="0 0 1.5707963267948966" xyz="0 0 -0.003"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/shoulder.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="file:///home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/shoulder.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="interbotix_black"/>
     </visual>
     <collision>
       <origin rpy="0 0 1.5707963267948966" xyz="0 0 -0.003"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/shoulder.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="file:///home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/shoulder.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
     <inertial>
@@ -73,26 +66,20 @@
     <dynamics damping="0.1" friction="0.1"/>
   </joint>
 
-</xacro:macro>
 
-
-
-
-
-<xacro:macro name="upper_arm_link">
 
   <link name="vx300s/upper_arm_link">
     <visual>
       <origin rpy="0 0 1.5707963267948966" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/upper_arm.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="file:///home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/upper_arm.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="interbotix_black"/>
     </visual>
     <collision>
       <origin rpy="0 0 1.5707963267948966" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/upper_arm.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="file:///home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/upper_arm.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
     <inertial>
@@ -110,28 +97,20 @@
     <dynamics damping="0.1" friction="0.1"/>
   </joint>
 
-</xacro:macro>
 
-
-
-
-
-
-
-<xacro:macro name="upper_forearm_link">
 
   <link name="vx300s/upper_forearm_link">
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/upper_forearm.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="file:///home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/upper_forearm.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="interbotix_black"/>
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/upper_forearm.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="file:///home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/upper_forearm.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
     <inertial>
@@ -149,28 +128,22 @@
     <dynamics damping="0.1" friction="0.1"/>
   </joint>
 
-</xacro:macro>
 
 
 
-
-
-
-
-<xacro:macro name="lower_forearm_link">
 
   <link name="vx300s/lower_forearm_link">
     <visual>
       <origin rpy="3.141592653589793 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/lower_forearm.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="file:///home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/lower_forearm.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="interbotix_black"/>
     </visual>
     <collision>
       <origin rpy="3.141592653589793 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/lower_forearm.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="file:///home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/lower_forearm.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
     <inertial>
@@ -188,28 +161,20 @@
     <dynamics damping="0.1" friction="0.1"/>
   </joint>
 
-</xacro:macro>
 
-
-
-
-
-
-
-<xacro:macro name="wrist_link">
 
   <link name="vx300s/wrist_link">
     <visual>
       <origin rpy="0 0 1.5707963267948966" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/wrist.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="file:///home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/wrist.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="interbotix_black"/>
     </visual>
     <collision>
       <origin rpy="0 0 1.5707963267948966" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/wrist.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="file:///home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/wrist.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
     <inertial>
@@ -228,26 +193,20 @@
     <dynamics damping="0.1" friction="0.1"/>
   </joint>
 
-</xacro:macro>
 
-
-
-
-
-<xacro:macro name="gripper_link">
 
   <link name="vx300s/gripper_link">
     <visual>
       <origin rpy="0 0 1.5707963267948966" xyz="-0.02 0 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/gripper.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="file:///home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/gripper.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="interbotix_black"/>
     </visual>
     <collision>
       <origin rpy="0 0 1.5707963267948966" xyz="-0.02 0 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/gripper.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="file:///home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/gripper.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
     <inertial>
@@ -263,13 +222,7 @@
     <child link="vx300s/ee_arm_link"/>
   </joint>
 
-</xacro:macro>
 
-
-
-
-
-<xacro:macro name="ee_arm_link">
 
   <link name="vx300s/ee_arm_link">
     <inertial>
@@ -286,27 +239,21 @@
     <dynamics damping="0.1" friction="0.1"/>
   </joint>
 
-</xacro:macro>
 
 
-
-
-
-
-<xacro:macro name="gripper_prop_link">
 
  <link name="vx300s/gripper_prop_link">
     <visual>
       <origin rpy="0 0 1.5707963267948966" xyz="-0.0685 0 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/gripper_prop.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="file:///home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/gripper_prop.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="interbotix_black"/>
     </visual>
     <collision>
       <origin rpy="0 0 1.5707963267948966" xyz="-0.0685 0 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/gripper_prop.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="file:///home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/gripper_prop.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
     <inertial>
@@ -317,7 +264,6 @@
   </link>
 
 
-</xacro:macro>
 
 
 
@@ -326,20 +272,19 @@
   <!-- show_ar_tag -->
   <!-- If the gripper bar is being used, then also add the gripper bar -->
   
-<xacro:macro name="gripper_bar_link">
 
   <link name="vx300s/gripper_bar_link">
     <visual>
       <origin rpy="0 0 1.5707963267948966" xyz="-0.063 0 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/gripper_bar.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="file:///home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/gripper_bar.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="interbotix_black"/>
     </visual>
     <collision>
       <origin rpy="0 0 1.5707963267948966" xyz="-0.063 0 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/gripper_bar.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="file:///home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/gripper_bar.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
     <inertial>
@@ -356,16 +301,6 @@
   </joint>
 
 
-</xacro:macro>
-  
-  
-  
-  
-  
-
-
-<xacro:macro name="fingers_link">
-
 <joint name="ee_bar" type="fixed">
     <axis xyz="1 0 0"/>
     <origin rpy="0 0 0" xyz="0.025875 0 0"/>
@@ -379,27 +314,19 @@
     </inertial>
   </link>
 
-</xacro:macro>
-
-
-  
-  <!-- If the gripper fingers are being used, add those as well -->
-
-<xacro:macro name="left_finger_link">
-
 
   <link name="vx300s/left_finger_link">
     <visual>
       <origin rpy="1.5707963267948966 -3.141592653589793 1.5707963267948966" xyz="-0.0404 -0.0575 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/gripper_finger.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="file:///home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/gripper_finger.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="interbotix_black"/>
     </visual>
     <collision>
       <origin rpy="1.5707963267948966 -3.141592653589793 1.5707963267948966" xyz="-0.0404 -0.0575 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/gripper_finger.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="file:///home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/gripper_finger.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
     <inertial>
@@ -421,17 +348,6 @@
 
 
 
-</xacro:macro>
-
-
-
-
-
-
-
-
-<xacro:macro name="right_finger_link">
-
 <joint name="right_finger" type="prismatic">
     <axis xyz="0 1 0"/>
     <limit effort="5" lower="-0.057" upper="-0.021" velocity="1"/>
@@ -445,14 +361,14 @@
     <visual>
       <origin rpy="-1.5707963267948966 3.141592653589793 -1.5707963267948966" xyz="-0.0404 0.0575 0 "/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/gripper_finger.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="file:///home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/gripper_finger.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="interbotix_black"/>
     </visual>
     <collision>
       <origin rpy="-1.5707963267948966 3.141592653589793 -1.5707963267948966" xyz="-0.0404 0.0575 0 "/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/gripper_finger.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="file:///home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/gripper_finger.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
     <inertial>
@@ -463,15 +379,7 @@
   </link>
 
 
-</xacro:macro>
-
   
-
-
-
-
-<xacro:macro name="ee_gripper_link">
-
 <joint name="ee_gripper" type="fixed">
     <axis xyz="1 0 0"/>
     <origin rpy="0 0 0" xyz="0.0385 0 0"/>
@@ -488,25 +396,6 @@
 </xacro:macro>
 
 
-    <xacro:base_link/> 
-    <xacro:shoulder_link/>
-    <xacro:upper_arm_link/>
-    <xacro:upper_forearm_link/>
-    <xacro:lower_forearm_link/>
-    <xacro:wrist_link/>
-    <xacro:gripper_link/>
-    <xacro:ee_arm_link/>
-    <xacro:gripper_prop_link/>
-    <xacro:gripper_bar_link/>
-    <xacro:fingers_link/>
-    <xacro:left_finger_link/>
-    <xacro:right_finger_link/>
-    <xacro:ee_gripper_link/>
+    <xacro:vx300s/> 
 
-
-
-  
-  <!-- show_gripper_fingers -->
-  <!-- show_gripper_bar -->
-  <!-- use_gripper -->
 </robot>

@@ -47,7 +47,7 @@
     <collision>
       <origin rpy="0 0 1.5707963267948966" xyz="0 0 -0.003"/>
       <geometry>
-        <mesh filename="package://vx300s_description/meshes/vx300s_meshes/shoulder.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://vx300s_description/vx300s_meshes/shoulder.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
     <inertial>

@@ -46,6 +46,8 @@
       command_interfaces:
         - effort
       state_interfaces:
+        - position
+        - velocity
         - effort
   joint_state_broadcaster:
     ros__parameters:
