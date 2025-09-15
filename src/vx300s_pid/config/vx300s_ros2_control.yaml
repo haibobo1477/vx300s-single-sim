@@ -1,0 +1,61 @@
+/vx300s:
+  controller_manager:
+    ros__parameters:
+      update_rate: 1000
+      joint_state_broadcaster:
+        type: joint_state_broadcaster/JointStateBroadcaster
+      arm_controller:
+        type: joint_trajectory_controller/JointTrajectoryController
+      gripper_controller:
+        type: joint_trajectory_controller/JointTrajectoryController
+
+  arm_controller:
+    ros__parameters:
+      joints:
+        - waist
+        - shoulder
+        - elbow
+        - forearm_roll
+        - wrist_angle
+        - wrist_rotate
+      interface_name: effort                # ← 改成 effort
+      command_interfaces:
+        - effort                            # ← 控制输入是力/力矩
+      state_interfaces:
+        - position 
+        - velocity 
+        - effort                            # ← 状态反馈也读 effort
+      state_publish_rate: 50.0
+      action_monitor_rate: 20.0
+      gains:                                # ← PID 增益必须配置 (示例)
+        waist:        {p: 100.0, i: 0.01, d: 10.0}
+        shoulder:     {p: 100.0, i: 0.01, d: 10.0}
+        elbow:        {p: 100.0, i: 0.01, d: 10.0}
+        forearm_roll: {p: 100.0, i: 0.01, d: 10.0}
+        wrist_angle:  {p: 100.0, i: 0.01, d: 10.0}
+        wrist_rotate: {p: 100.0, i: 0.01, d: 10.0}
+      constraints:
+        stopped_velocity_tolerance: 0.02
+        goal_time: 1.0
+  gripper_controller:
+    ros__parameters:
+      joints:
+        - left_finger
+        - right_finger
+      interface_name: effort                # ← 同样改成 effort
+      command_interfaces:
+        - effort
+      state_interfaces:
+        - effort
+  joint_state_broadcaster:
+    ros__parameters:
+      joints:
+        - waist
+        - shoulder
+        - elbow
+        - forearm_roll
+        - wrist_angle
+        - wrist_rotate
+        - gripper
+        - left_finger
+        - right_finger
