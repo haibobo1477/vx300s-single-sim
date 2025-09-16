@@ -46,7 +46,7 @@ from launch.actions import (
 def generate_launch_description():
     # 包路径
     urdf_package_path = get_package_share_directory('vx300s_description')
-    default_xacro_path = os.path.join(urdf_package_path, 'urdf', 'vx300s.xacro')
+    default_xacro_path = os.path.join(urdf_package_path, 'urdf', 'vx300s.urdf.xacro')
     default_gazebo_world_path = os.path.join(urdf_package_path, 'world', 'custom_room.world')
 
     # 参数: 机器人模型
@@ -89,6 +89,17 @@ def generate_launch_description():
         arguments=['-topic', '/robot_description', '-entity', 'vx300s'],
         output='screen'
     )
+    
+    action_load_joint_state_controller = launch.actions.ExecuteProcess(
+        cmd='ros2 control load_controller joint_state_broadcaster --set-state active'.split(' '),
+        output='screen'
+    )
+    
+    
+    action_load_effort_controller = launch.actions.ExecuteProcess(
+        cmd='ros2 control load_controller arm_controller --set-state active'.split(' '),
+        output='screen'
+    )
 
     # Gazebo 模型路径
     # gz_resource_path_env_var = SetEnvironmentVariable(
@@ -107,5 +118,17 @@ def generate_launch_description():
         # gz_resource_path_env_var,
         action_robot_state_publisher,
         action_launch_gazebo,
-        action_spawn_entity
+        action_spawn_entity,
+        launch.actions.RegisterEventHandler(
+            event_handler=launch.event_handlers.OnProcessExit(
+                target_action=action_spawn_entity,
+                on_exit=[action_load_joint_state_controller],
+            )
+        ),
+        launch.actions.RegisterEventHandler(
+            event_handler=launch.event_handlers.OnProcessExit(
+                target_action=action_spawn_entity,
+                on_exit=[action_load_effort_controller],
+            )
+        ),
     ])
