@@ -6,6 +6,14 @@
   <!-- use_world_frame -->
 <xacro:macro name="vx300s">
 
+<link name="world"/>
+    <joint name="fixed" type="fixed">
+      <parent
+        link="world"/>
+      <child
+        link="vx300s/base_link"/>
+    </joint>
+
  <link name="vx300s/base_link">
      <visual>
        <origin rpy="0 0 1.5707963267948966" xyz="0 0 0"/>
