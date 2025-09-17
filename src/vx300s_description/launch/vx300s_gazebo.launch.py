@@ -101,6 +101,11 @@ def generate_launch_description():
         output='screen'
     )
 
+    action_load_gripper_controller = launch.actions.ExecuteProcess(
+        cmd='ros2 control load_controller gripper_controller --set-state active'.split(' '),
+        output='screen'
+    )
+
     # Gazebo 模型路径
     # gz_resource_path_env_var = SetEnvironmentVariable(
     #     name='GAZEBO_MODEL_PATH',
@@ -129,6 +134,12 @@ def generate_launch_description():
             event_handler=launch.event_handlers.OnProcessExit(
                 target_action=action_spawn_entity,
                 on_exit=[action_load_effort_controller],
+            )
+        ),
+        launch.actions.RegisterEventHandler(
+            event_handler=launch.event_handlers.OnProcessExit(
+                target_action=action_spawn_entity,
+                on_exit=[action_load_gripper_controller],
             )
         ),
     ])

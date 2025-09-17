@@ -10,7 +10,7 @@ controller_manager:
       type: effort_controllers/JointGroupEffortController
 
    gripper_controller:
-      type: effort_controllers/JointGroupEffortController
+      type: joint_trajectory_controller/JointTrajectoryController
 
 arm_controller:
   ros__parameters:
@@ -21,22 +21,15 @@ arm_controller:
       - forearm_roll
       - wrist_angle
       - wrist_rotate
-    interface_name: effort                # ← 改成 effort
+    interface_name: effort                 # ← 改成 effort
     command_interfaces:
       - effort                            # ← 控制输入是力/力矩
     state_interfaces:
       - position 
       - velocity
-      - effort                        # ← 状态反馈也读 effort
+      - effort                      # ← 状态反馈也读 effort
     state_publish_rate: 50.0
     action_monitor_rate: 20.0
-    # gains:                                # ← PID 增益必须配置 (示例)
-    #     waist:        {p: 100.0, i: 0.01, d: 10.0}
-    #     shoulder:     {p: 100.0, i: 0.01, d: 10.0}
-    #     elbow:        {p: 100.0, i: 0.01, d: 10.0}
-    #     forearm_roll: {p: 100.0, i: 0.01, d: 10.0}
-    #     wrist_angle:  {p: 100.0, i: 0.01, d: 10.0}
-    #     wrist_rotate: {p: 100.0, i: 0.01, d: 10.0}
     constraints:
         stopped_velocity_tolerance: 0.02
         goal_time: 1.0
@@ -63,3 +56,4 @@ joint_state_broadcaster:
       - gripper
       - left_finger
       - right_finger
+

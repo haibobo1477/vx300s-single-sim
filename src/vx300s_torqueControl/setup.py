@@ -20,6 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'jointlistener_Node=vx300s_torqueControl.joint_state_listener:main'
         ],
     },
 )
