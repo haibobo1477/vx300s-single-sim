@@ -5,21 +5,21 @@
 <!-- =================================================================================== -->
 <robot name="vx300s">
   <material name="interbotix_black">
-    <texture filename="package://vx300s_description/vx300s_meshes/interbotix_black.png"/>
+    <texture filename="/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/interbotix_black.png"/>
   </material>
   <!-- use_world_frame -->
   <link name="vx300s/base_link">
     <visual>
       <origin rpy="0 0 1.5707963267948966" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/base.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/base.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="interbotix_black"/>
     </visual>
     <collision>
       <origin rpy="0 0 1.5707963267948966" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/base.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/base.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
     <inertial>
@@ -40,14 +40,14 @@
     <visual>
       <origin rpy="0 0 1.5707963267948966" xyz="0 0 -0.003"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/shoulder.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/shoulder.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="interbotix_black"/>
     </visual>
     <collision>
       <origin rpy="0 0 1.5707963267948966" xyz="0 0 -0.003"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/shoulder.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/shoulder.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
     <inertial>
@@ -68,14 +68,14 @@
     <visual>
       <origin rpy="0 0 1.5707963267948966" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/upper_arm.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/upper_arm.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="interbotix_black"/>
     </visual>
     <collision>
       <origin rpy="0 0 1.5707963267948966" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/upper_arm.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/upper_arm.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
     <inertial>
@@ -96,14 +96,14 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/upper_forearm.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/upper_forearm.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="interbotix_black"/>
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/upper_forearm.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/upper_forearm.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
     <inertial>
@@ -124,14 +124,14 @@
     <visual>
       <origin rpy="3.141592653589793 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/lower_forearm.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/lower_forearm.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="interbotix_black"/>
     </visual>
     <collision>
       <origin rpy="3.141592653589793 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/lower_forearm.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/lower_forearm.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
     <inertial>
@@ -152,14 +152,14 @@
     <visual>
       <origin rpy="0 0 1.5707963267948966" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/wrist.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/wrist.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="interbotix_black"/>
     </visual>
     <collision>
       <origin rpy="0 0 1.5707963267948966" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/wrist.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/wrist.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
     <inertial>
@@ -181,14 +181,14 @@
     <visual>
       <origin rpy="0 0 1.5707963267948966" xyz="-0.02 0 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/gripper.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/gripper.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="interbotix_black"/>
     </visual>
     <collision>
       <origin rpy="0 0 1.5707963267948966" xyz="-0.02 0 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/gripper.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/gripper.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
     <inertial>
@@ -221,14 +221,14 @@
     <visual>
       <origin rpy="0 0 1.5707963267948966" xyz="-0.0685 0 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/gripper_prop.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/gripper_prop.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="interbotix_black"/>
     </visual>
     <collision>
       <origin rpy="0 0 1.5707963267948966" xyz="-0.0685 0 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/gripper_prop.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/gripper_prop.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
     <inertial>
@@ -250,14 +250,14 @@
     <visual>
       <origin rpy="0 0 1.5707963267948966" xyz="-0.063 0 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/gripper_bar.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/gripper_bar.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="interbotix_black"/>
     </visual>
     <collision>
       <origin rpy="0 0 1.5707963267948966" xyz="-0.063 0 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/gripper_bar.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/gripper_bar.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
     <inertial>
@@ -291,14 +291,14 @@
     <visual>
       <origin rpy="1.5707963267948966 -3.141592653589793 1.5707963267948966" xyz="-0.0404 -0.0575 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/gripper_finger.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/gripper_finger.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="interbotix_black"/>
     </visual>
     <collision>
       <origin rpy="1.5707963267948966 -3.141592653589793 1.5707963267948966" xyz="-0.0404 -0.0575 0"/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/gripper_finger.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/gripper_finger.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
     <inertial>
@@ -320,14 +320,14 @@
     <visual>
       <origin rpy="-1.5707963267948966 3.141592653589793 -1.5707963267948966" xyz="-0.0404 0.0575 0 "/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/gripper_finger.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/gripper_finger.stl" scale="0.001 0.001 0.001"/>
       </geometry>
       <material name="interbotix_black"/>
     </visual>
     <collision>
       <origin rpy="-1.5707963267948966 3.141592653589793 -1.5707963267948966" xyz="-0.0404 0.0575 0 "/>
       <geometry>
-        <mesh filename="package://vx300s_description/vx300s_meshes/gripper_finger.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/gripper_finger.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
     <inertial>

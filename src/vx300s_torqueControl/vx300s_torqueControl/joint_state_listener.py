@@ -51,7 +51,7 @@ class GravityCompNode(Node):
         self.G3 = np.diag([0.008925, 0.008937, 0.0009357, 0.792592, 0.792592, 0.792592])
         self.G4 = np.diag([0.0001524, 0.001342, 0.001441, 0.322228, 0.322228, 0.322228])
         self.G5 = np.diag([0.0001753, 0.0005269, 0.0005911, 0.414823, 0.414823, 0.414823])
-        self.G6 = np.diag([4.631e-5, 4.514e-5, 5.27e-5, 0.344642, 0.344642, 0.344642])
+        self.G6 = np.diag([4.631e-5, 4.514e-5, 5.27e-5, 0.115395, 0.115395, 0.115395])
         self.Glist = np.array([self.G1, self.G2, self.G3, self.G4, self.G5, self.G6])
 
         # ---------------- Slist ----------------
@@ -75,7 +75,7 @@ class GravityCompNode(Node):
         self.pub = self.create_publisher(Float64MultiArray, '/arm_controller/commands', 10)
 
         # 定时器 10Hz
-        self.timer = self.create_timer(0.01, self.timer_callback)
+        self.timer = self.create_timer(0.1, self.timer_callback)
 
         self.latest_msg = None
 
