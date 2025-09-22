@@ -217,7 +217,7 @@
       <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
     </inertial>
   </link>
-  <joint name="gripper" type="continuous">
+  <joint name="gripper" type="fixed">
     <axis xyz="1 0 0"/>
     <limit effort="1" velocity="3.141592653589793"/>
     <origin rpy="0 0 0" xyz="0.005675 0 0"/>
@@ -287,7 +287,7 @@
     </inertial>
   </link>
   <!-- If the gripper fingers are being used, add those as well -->
-  <joint name="left_finger" type="prismatic">
+  <joint name="left_finger" type="fixed">
     <axis xyz="0 1 0"/>
     <limit effort="5" lower="0.021" upper="0.057" velocity="1"/>
     <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -315,7 +315,7 @@
       <inertia ixx="0.0000243300" ixy="-0.0000024004" ixz="0.0000000000" iyy="0.0000125500" iyz="0.0000000000" izz="0.0000141700"/>
     </inertial>
   </link>
-  <joint name="right_finger" type="prismatic">
+  <joint name="right_finger" type="fixed">
     <axis xyz="0 1 0"/>
     <limit effort="5" lower="-0.057" upper="-0.021" velocity="1"/>
     <origin rpy="0 0 0" xyz="0 0 0"/>

@@ -46,7 +46,7 @@ from launch.actions import (
 def generate_launch_description():
     # 包路径
     urdf_package_path = get_package_share_directory('vx300s_description')
-    default_xacro_path = os.path.join(urdf_package_path, 'urdf', 'vx300s.urdf.xacro')
+    default_xacro_path = os.path.join(urdf_package_path, 'urdf', 'vx300s_fix.urdf.xacro')
     default_gazebo_world_path = os.path.join(urdf_package_path, 'world', 'custom_room.world')
 
     # 参数: 机器人模型
@@ -136,10 +136,10 @@ def generate_launch_description():
                 on_exit=[action_load_effort_controller],
             )
         ),
-        launch.actions.RegisterEventHandler(
-            event_handler=launch.event_handlers.OnProcessExit(
-                target_action=action_spawn_entity,
-                on_exit=[action_load_gripper_controller],
-            )
-        ),
+        # launch.actions.RegisterEventHandler(
+        #     event_handler=launch.event_handlers.OnProcessExit(
+        #         target_action=action_spawn_entity,
+        #         on_exit=[action_load_gripper_controller],
+        #     )
+        # ),
     ])

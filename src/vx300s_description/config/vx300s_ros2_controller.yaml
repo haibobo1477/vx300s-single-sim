@@ -1,6 +1,6 @@
 controller_manager:
   ros__parameters:
-   update_rate: 100
+   update_rate: 1000
    use_sim_time: true
 
    joint_state_broadcaster:
@@ -21,29 +21,18 @@ arm_controller:
       - forearm_roll
       - wrist_angle
       - wrist_rotate
-    interface_name: effort                 # ← 改成 effort
+    interface_name: effort               
     command_interfaces:
-      - effort                            # ← 控制输入是力/力矩
+      - effort                            
     state_interfaces:
       - position 
       - velocity
-      - effort                      # ← 状态反馈也读 effort
+      - effort                      
     state_publish_rate: 50.0
     action_monitor_rate: 20.0
     constraints:
         stopped_velocity_tolerance: 0.02
         goal_time: 1.0
-gripper_controller:
-  ros__parameters:
-    joints:
-      - left_finger
-      - right_finger
-    interface_name: position                # ← 同样改成 effort
-    command_interfaces:
-      - position
-    state_interfaces:
-      - position
-      - velocity
 joint_state_broadcaster:
   ros__parameters:
     joints:
@@ -53,7 +42,3 @@ joint_state_broadcaster:
       - forearm_roll
       - wrist_angle
       - wrist_rotate
-      - gripper
-      - left_finger
-      - right_finger
-

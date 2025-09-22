@@ -4,7 +4,7 @@ from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
 def generate_launch_description():
-    xacro_file = PathJoinSubstitution([FindPackageShare('vx300s_description'), 'urdf', 'vx300s.xacro'])
+    xacro_file = PathJoinSubstitution([FindPackageShare('vx300s_description'), 'urdf', 'vx300s_ros2.urdf.xacro'])
     robot_description = Command([FindExecutable(name='xacro'), ' ', xacro_file])
     # 找到 RViz 配置文件（假设放在包的 config 目录里）
     rviz_config_file = PathJoinSubstitution([
