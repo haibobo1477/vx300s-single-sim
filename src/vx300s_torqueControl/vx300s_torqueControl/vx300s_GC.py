@@ -38,6 +38,8 @@ def extract_by_name(msg_names, msg_vals, wanted_names):
         out.append(m.get(n, 0.0))
     return np.array(out, dtype=float)
 
+
+
 class GravityCompNode(Node):
     def __init__(self):
         super().__init__("gravity_comp_node")
@@ -45,15 +47,6 @@ class GravityCompNode(Node):
         # --------------- 可调参数 ---------------
         # 关节粘性阻尼系数（Nm/(rad/s)），按顺序对应 target_joints
         self.damping = np.array([0.6, 0.8, 0.6, 0.15, 0.12, 0.12], dtype=float)
-        # 速度一阶低通滤波截止频率（Hz），抑制编码器噪声
-        self.vel_cutoff_hz = 8.0
-        # 每个关节的扭矩限幅（Nm），按需调整；若不清楚，先给个保守值
-        self.torque_limits = np.array([6.0, 8.0, 6.0, 1.5, 1.0, 1.0], dtype=float)
-
-        # 速度滤波状态
-        self.v_filt = np.zeros(model.nv)
-        self.last_stamp_sec = None  # 从 JointState.header 计算 dt
-        self.fallback_monotonic = monotonic()
 
         # 订阅与发布
         self.create_subscription(JointState, "/joint_states",
@@ -66,48 +59,18 @@ class GravityCompNode(Node):
     def joint_state_callback(self, msg: JointState):
         # --------- 提取 q, dq ---------
         q = extract_by_name(msg.name, msg.position, target_joints)
+        # print(q)
         # 有些驱动不会发布 velocity，就用 0 或自行差分
-        dq_raw = extract_by_name(msg.name, msg.velocity, target_joints)
+        dq = extract_by_name(msg.name, msg.velocity, target_joints)
+        # print(dq)
 
-        # --------- 计算 dt（用于滤波） ---------
-        if msg.header.stamp.sec or msg.header.stamp.nanosec:
-            stamp_sec = msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9
-            if self.last_stamp_sec is None:
-                dt = 0.0
-            else:
-                dt = max(1e-4, min(0.1, stamp_sec - self.last_stamp_sec))
-            self.last_stamp_sec = stamp_sec
-        else:
-            # 万一 header 没时间戳，用 monotonic 做一个
-            now = monotonic()
-            dt = max(1e-4, min(0.1, now - self.fallback_monotonic))
-            self.fallback_monotonic = now
-
-        # --------- 速度低通滤波（单极点一阶） ---------
-        # y[k] = y[k-1] + alpha*(x[k]-y[k-1]), alpha = 1 - exp(-2π fc dt)
-        if dt > 0.0:
-            alpha = 1.0 - math.exp(-2.0 * math.pi * self.vel_cutoff_hz * dt)
-        else:
-            alpha = 1.0
-        self.v_filt = self.v_filt + alpha * (dq_raw - self.v_filt)
-        dq = self.v_filt
 
         # --------- 重力项 ---------
         tau_g = pin.rnea(model, data, q,
                          np.zeros(model.nv),  # dq=0
                          np.zeros(model.nv))  # ddq=0
 
-        # --------- 阻尼项（粘性阻尼） ---------
-        tau_damp = self.damping * dq
-
-        # 总扭矩：重力补偿 - 阻尼（阻尼是“耗能”，与速度同向时减小输出）
-        tau = tau_g - tau_damp
-        print(tau)
-
-        # --------- 限幅与数值健壮性 ---------
-        # tau = np.nan_to_num(tau, nan=0.0, posinf=0.0, neginf=0.0)
-        # tau = np.clip(tau, -self.torque_limits, self.torque_limits)
-
+        tau = tau_g - self.damping * dq
         # --------- 发布 ---------
         msg_out = Float64MultiArray()
         msg_out.data = tau.tolist()
