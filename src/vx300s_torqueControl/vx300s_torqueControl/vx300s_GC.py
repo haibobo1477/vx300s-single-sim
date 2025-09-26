@@ -10,21 +10,25 @@ import numpy as np
 import math
 from time import monotonic
 
-# ====== Pinocchio 模型构建 ======
-urdf_model_path = "/home/haibo/vx300s_ws/src/vx300s_description/urdf/vx300s_fix.urdf"
-mesh_dir = "/home/haibo/vx300s_ws/src/vx300s_description/vx300s_meshes/"
+
+# urdf_model_path = "/home/haibo/vx300s_ws/src/vx300s_description/urdf/vx300s_fix.urdf"
+# mesh_dir = "/home/haibo/vx300s_ws/src/vx300s_description/vx300s_meshes/"
+
+
+urdf_model_path = "/home/yc/vx300s-single-sim/src/vx300s_description/urdf/vx300s_fix.urdf"
+mesh_dir = "/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/"
 
 model, collision_model, visual_model = pin.buildModelsFromUrdf(
     urdf_model_path,
     package_dirs=[mesh_dir]
 )
 
-# 自定义重力（保持和你原来一致）
+
 custom_gravity = pin.Motion(np.array([0, 0, -9.80, 0, 0, 0]))
 model.gravity = custom_gravity
 data = model.createData()
 
-# 6 个主要关节（顺序要与控制器/JointState一致）
+
 target_joints = ["waist", "shoulder", "elbow",
                  "forearm_roll", "wrist_angle", "wrist_rotate"]
 
@@ -44,11 +48,9 @@ class GravityCompNode(Node):
     def __init__(self):
         super().__init__("gravity_comp_node")
 
-        # --------------- 可调参数 ---------------
-        # 关节粘性阻尼系数（Nm/(rad/s)），按顺序对应 target_joints
         self.damping = np.array([0.6, 0.8, 0.6, 0.15, 0.12, 0.12], dtype=float)
 
-        # 订阅与发布
+     
         self.create_subscription(JointState, "/joint_states",
                                  self.joint_state_callback, 50)
         self.tau_pub = self.create_publisher(Float64MultiArray,
@@ -57,21 +59,24 @@ class GravityCompNode(Node):
         self.get_logger().info("Gravity + Damping compensation started.")
 
     def joint_state_callback(self, msg: JointState):
-        # --------- 提取 q, dq ---------
+       
         q = extract_by_name(msg.name, msg.position, target_joints)
         # print(q)
-        # 有些驱动不会发布 velocity，就用 0 或自行差分
+        
         dq = extract_by_name(msg.name, msg.velocity, target_joints)
         # print(dq)
 
 
-        # --------- 重力项 ---------
+       
         tau_g = pin.rnea(model, data, q,
                          np.zeros(model.nv),  # dq=0
                          np.zeros(model.nv))  # ddq=0
 
         tau = tau_g - self.damping * dq
-        # --------- 发布 ---------
+
+
+        print(tau_g)
+        # --------- publisher ---------
         msg_out = Float64MultiArray()
         msg_out.data = tau.tolist()
         self.tau_pub.publish(msg_out)

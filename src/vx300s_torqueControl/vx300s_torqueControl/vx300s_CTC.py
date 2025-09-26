@@ -7,19 +7,24 @@ from std_msgs.msg import Float64MultiArray
 import pinocchio as pin
 import numpy as np
 
-# ====== Pinocchio 模型构建 ======
-urdf_model_path = "/home/haibo/vx300s_ws/src/vx300s_description/urdf/vx300s_fix.urdf"
-mesh_dir = "/home/haibo/vx300s_ws/src/vx300s_description/vx300s_meshes/"
+# ====== Pinocchio model ======
+# urdf_model_path = "/home/haibo/vx300s_ws/src/vx300s_description/urdf/vx300s_fix.urdf"
+# mesh_dir = "/home/haibo/vx300s_ws/src/vx300s_description/vx300s_meshes/"
+
+urdf_model_path = "/home/yc/vx300s-single-sim/src/vx300s_description/urdf/vx300s_fix.urdf"
+mesh_dir = "/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/"
+
+
 
 model, _, _ = pin.buildModelsFromUrdf(urdf_model_path, package_dirs=[mesh_dir])
 
-# 正确设置重力（线加速度在 .linear 里）
+# set gravity
 model.gravity = pin.Motion.Zero()
 model.gravity.linear = np.array([0.0, 0.0, -9.81])
 
 data = model.createData()
 
-# 6 个主要关节（顺序要与 /joint_states 与控制器一致）
+# 6 joints
 target_joints = ["waist", "shoulder", "elbow", "forearm_roll", "wrist_angle", "wrist_rotate"]
 assert model.nv == len(target_joints), f"model.nv={model.nv} 与目标关节数 {len(target_joints)} 不一致"
 
@@ -35,34 +40,33 @@ class GravityCompNode(Node):
         self.start_time = self.get_clock().now().nanoseconds * 1e-9
 
 
-        # ---- 可调参数 ----
-        # 关节粘性阻尼（Nm/(rad/s)），作为额外阻尼项，按需调整或置零
+        # ---- parameter----
         self.D_visc = np.array([0.6, 0.8, 0.6, 0.15, 0.12, 0.12], dtype=float)
-        # 力矩限幅，防仿真数值发散
+        # tau limitation
         self.tau_limit = np.array([10, 10, 10, 5, 4, 4], dtype=float)
 
-        # PD 增益（CTC 中用于生成 qdd_ref 的那部分）
+        # PD gain
         self.Kp = np.diag([50, 50, 40, 20, 10, 5])
         self.Kd = np.diag([5,  5,  4,  2,  1, 0.5])
 
-        # 期望轨迹（这里先用零位；你可换成任意随时间的轨迹并更新 q_des/qd_des/qdd_des）
+        # reference
         self.q_des   = np.zeros(6)
         self.qd_des  = np.zeros(6)
         self.qdd_des = np.zeros(6)
 
-        # 订阅/发布
+        # pub/sub
         self.create_subscription(JointState, "/joint_states", self.joint_state_callback, 50)
         self.tau_pub = self.create_publisher(Float64MultiArray, "/arm_controller/commands", 10)
 
     def joint_state_callback(self, msg: JointState):
         
-        # 当前时间
+        # time now
         t = self.get_clock().now().nanoseconds * 1e-9 - self.start_time
 
-    # --------- 期望轨迹定义 ---------
-        A = [0.0, 0.0, 0.0, 0.0, 0.5, 0.5]   # 每个关节的振幅 [rad]
-        w = 0.5                              # rad/s
-        q0 = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # 初始偏置
+    # --------- ref trajtory ---------
+        A = [0.0, 0.0, 0.0, 0.0, 0.5, 0.5]   
+        w = 0.5                              
+        q0 = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  
 
         q_des   = np.zeros(6)
         qd_des  = np.zeros(6)
@@ -78,29 +82,27 @@ class GravityCompNode(Node):
         self.qdd_des = qdd_des
         
         
-        # 当前状态
+        # current joint states
         q  = extract_by_name(msg.name, msg.position, target_joints)
         dq = extract_by_name(msg.name, msg.velocity, target_joints)  # 若驱动不给速度，可自行差分估计
 
-        # 误差
+        # error
         e    = self.q_des  - q
         edot = self.qd_des - dq
 
-        # 期望加速度（含 PD 反馈）
+        # reference acc
         qdd_ref = self.qdd_des + self.Kp.dot(e) + self.Kd.dot(edot)
 
-        # 用 RNEA 一次性得到 M(q)qdd_ref + C(q,dq)dq + G(q)
+        #  M(q)qdd_ref + C(q,dq)dq + G(q)
         tau = pin.rnea(model, data, q, dq, qdd_ref)
 
-        # 额外加入少量粘性阻尼（可选，有助抑制微漂/数值噪声）
         tau -= self.D_visc * dq
 
-        # 限幅
         tau = np.clip(tau, -self.tau_limit, self.tau_limit)
         
         self.get_logger().info(f"t={t:.2f}, q_des={self.q_des}, q={q}")
 
-        # 发布
+        # pub
         out = Float64MultiArray()
         out.data = tau.tolist()
         self.tau_pub.publish(out)
