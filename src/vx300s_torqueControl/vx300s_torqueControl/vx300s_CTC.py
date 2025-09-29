@@ -64,27 +64,27 @@ class GravityCompNode(Node):
         t = self.get_clock().now().nanoseconds * 1e-9 - self.start_time
 
     # --------- ref trajtory ---------
-        A = [0.0, 0.0, 0.0, 0.0, 0.5, 0.5]   
-        w = 0.5                              
-        q0 = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  
+        
+        # --------- ref trajectory ---------
+        A = [0.0, 0.0, 0.0, 0.0, 0.0, 90.5]  
+        w = [0.5, 0.5, 0.5, 0.5, 0.5, 5.5]   
 
         q_des   = np.zeros(6)
         qd_des  = np.zeros(6)
         qdd_des = np.zeros(6)
 
         for i in range(6):
-            q_des[i]   = q0[i] + A[i] * np.sin(w*t)
-            qd_des[i]  =        A[i] * w * np.cos(w*t)
-            qdd_des[i] =      - A[i] * w**2 * np.sin(w*t)
+            q_des[i]   = A[i] * np.sin(w[i] * t)
+            qd_des[i]  = A[i] * w[i] * np.cos(w[i] * t)
+            qdd_des[i] = - A[i] * (w[i]**2) * np.sin(w[i] * t)
 
         self.q_des   = q_des
         self.qd_des  = qd_des
         self.qdd_des = qdd_des
         
-        
         # current joint states
         q  = extract_by_name(msg.name, msg.position, target_joints)
-        dq = extract_by_name(msg.name, msg.velocity, target_joints)  # 若驱动不给速度，可自行差分估计
+        dq = extract_by_name(msg.name, msg.velocity, target_joints) 
 
         # error
         e    = self.q_des  - q
