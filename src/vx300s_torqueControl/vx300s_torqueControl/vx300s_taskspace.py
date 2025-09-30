@@ -51,13 +51,13 @@ M = np.array([
 ])
 
 
-# ----------------- Pinocchio 模型 -----------------
-urdf_model_path = "/home/haibo/vx300s_ws/src/vx300s_description/urdf/vx300s_fix.urdf"
-mesh_dir = "/home/haibo/vx300s_ws/src/vx300s_description/vx300s_meshes/"
+# ----------------- Pinocchio model -----------------
+# urdf_model_path = "/home/haibo/vx300s_ws/src/vx300s_description/urdf/vx300s_fix.urdf"
+# mesh_dir = "/home/haibo/vx300s_ws/src/vx300s_description/vx300s_meshes/"
 
-# 如果是在另一台电脑，可以改成下面两行
-# urdf_model_path = "/home/yc/vx300s-single-sim/src/vx300s_description/urdf/vx300s_fix.urdf"
-# mesh_dir = "/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/"
+
+urdf_model_path = "/home/yc/vx300s-single-sim/src/vx300s_description/urdf/vx300s_fix.urdf"
+mesh_dir = "/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/"
 
 model, _, _ = pin.buildModelsFromUrdf(urdf_model_path, package_dirs=[mesh_dir])
 
@@ -77,26 +77,73 @@ def extract_by_name(msg_names, msg_vals, wanted_names):
     return np.array([m.get(n, 0.0) for n in wanted_names], dtype=float)
 
 
+
 def trajectory_generator(t):
-    """生成一个往返轨迹"""
-    # 起点和终点
-    X_start = np.array([0.3, -0.4, 0.3])
-    X_end = np.array([0.3,  0.4, 0.3])
+    """生成包含平移和恒定角速度的往返轨迹 (6D)"""
+    # --- 平移部分 ---
+    X_start = np.array([0.2, 0.4, 0.4])
+    X_end   = np.array([0.6, 0.4, 0.4])
+    w = 5.5  # rad/s，往返频率
 
-    # 频率（决定往返速度）
-    w = 0.5  # rad/s
-
-    # 插值参数 s(t)
-    s = 0.5 * (1 - np.cos(w * t))
-    s_dot = 0.5 * w * np.sin(w * t)
+    s      = 0.5 * (1 - np.cos(w * t))
+    s_dot  = 0.5 * w * np.sin(w * t)
     s_ddot = 0.5 * w**2 * np.cos(w * t)
 
-    # 位置、速度、加速度
-    Xd = (1 - s) * X_start + s * X_end
-    Xd_d = s_dot * (X_end - X_start)
-    Xd_dd = s_ddot * (X_end - X_start)
+    pos   = (1 - s) * X_start + s * X_end
+    vel   = s_dot * (X_end - X_start)
+    acc   = s_ddot * (X_end - X_start)
+
+    # --- 姿态部分（恒定） ---
+    rot_vec = np.array([0.0, 0.0, 0.0])
+    omega_const  = np.array([0.0, 0.0, 0.0])   # rad/s, 恒定角速度
+    domega_const = np.zeros(3)
+
+    # --- 合并成 6D ---
+    Xd    = np.hstack([rot_vec, pos])        # 期望状态 (位置+角度占位)
+    Xd_d  = np.hstack([omega_const, vel])        # 线速度+角速度
+    Xd_dd = np.hstack([domega_const, acc])       # 线加速度+角加速度
 
     return Xd, Xd_d, Xd_dd
+
+
+# def trajectory_generator(t):
+#     """生成圆形轨迹 (6D)"""
+#     # --- 圆的参数 ---
+#     center = np.array([0.0, 0.0, 0.6])   # 圆心
+#     r = 0.4                               # 半径
+#     w = 0.5                               # 角频率 (rad/s)
+
+#     # --- 位置 ---
+#     pos = np.array([
+#         center[0] + r * np.cos(w * t),
+#         center[1] + r * np.sin(w * t),
+#         center[2]
+#     ])
+
+#     # --- 一阶导：速度 ---
+#     vel = np.array([
+#         -r * w * np.sin(w * t),
+#          r * w * np.cos(w * t),
+#          0.0
+#     ])
+
+#     # --- 二阶导：加速度 ---
+#     acc = np.array([
+#         -r * w**2 * np.cos(w * t),
+#         -r * w**2 * np.sin(w * t),
+#          0.0
+#     ])
+
+#     # --- 姿态部分（这里不转动，角速度为0） ---
+#     omega_const  = np.array([0.0, 0.0, 0.0])  # 恒定角速度
+#     domega_const = np.zeros(3)
+
+#     # --- 合并成 6D ---
+#     Xd    = np.hstack([np.zeros(3), pos])        # 期望状态 (位置+角度占位)
+#     Xd_d  = np.hstack([omega_const, vel])        # 线速度+角速度
+#     Xd_dd = np.hstack([domega_const, acc])       # 线加速度+角加速度
+
+#     return Xd, Xd_d, Xd_dd
 
 
 # ----------------- ROS2 节点 -----------------
@@ -110,8 +157,10 @@ class GravityCompNode(Node):
         self.tau_pub = self.create_publisher(Float64MultiArray, "/arm_controller/commands", 10)
 
         # 控制增益
-        self.Kp = np.diag([300.0, 300.0, 300.0])
-        self.Kd = np.diag([5.0, 5.0, 5.0])
+        self.Kp = np.diag([300.0, 300.0, 300.0, 60.0, 60.0, 60.0])
+        self.Kd = np.diag([5.0,   5.0,   5.0,   1.0,  1.0,  1.0])
+
+        self.tau_limit = np.array([10, 10, 10, 5, 4, 4], dtype=float)
 
         # URDF 里定义的末端 frame 名字
         self.ee_name = "vx300s/ee_gripper_link"
@@ -130,33 +179,37 @@ class GravityCompNode(Node):
         pin.forwardKinematics(model, data, q, dq, a_zero)
         pin.updateFramePlacements(model, data)
         oMf = data.oMf[self.ee_id]
-        X = oMf.translation
+        Xp = oMf.translation
+        X = np.hstack([np.zeros(3), Xp])
+
 
         # 末端 Jacobian
-        J = mr.JacobianSpace(Slist, q)
-        Jv = J[3:6, :]
+        J = mr.JacobianSpace(Slist, q)   # [w v]
+        # Jv = J[3:6, :]
 
         # 末端加速度项
         a_cl = pin.getFrameClassicalAcceleration(model, data, self.ee_id, pin.LOCAL_WORLD_ALIGNED)
-        Jvdot_qdot = a_cl.linear
+        Jdot_qdot = np.hstack([a_cl.angular, a_cl.linear])
 
         # 期望轨迹
         Xd, Xd_d, Xd_dd = trajectory_generator(t)
 
         # 误差
         e = Xd - X
-        v = Jv @ dq
+        v = J @ dq
         edot = Xd_d - v
         aX = Xd_dd + self.Kp @ e + self.Kd @ edot
 
         # 伪逆求解加速度
         lam = 1e-3
-        JvJJ = Jv @ Jv.T
-        Jv_pinv = Jv.T @ np.linalg.inv(JvJJ + lam**2 * np.eye(3))
-        aq = Jv_pinv @ (aX - Jvdot_qdot)
+        JvJJ = J @ J.T
+        J_pinv = J.T @ np.linalg.inv(JvJJ + lam**2 * np.eye(6))
+        # J_pinv = np.linalg.pinv(J)
+        aq = J_pinv @ (aX - Jdot_qdot)
 
         # 动力学反算力矩
         tau = pin.rnea(model, data, q, dq, aq)
+        tau = np.clip(tau, -self.tau_limit, self.tau_limit)
 
         # 发布力矩
         out = Float64MultiArray()
