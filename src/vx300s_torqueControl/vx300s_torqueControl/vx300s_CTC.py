@@ -8,11 +8,11 @@ import pinocchio as pin
 import numpy as np
 
 # ====== Pinocchio model ======
-# urdf_model_path = "/home/haibo/vx300s_ws/src/vx300s_description/urdf/vx300s_fix.urdf"
-# mesh_dir = "/home/haibo/vx300s_ws/src/vx300s_description/vx300s_meshes/"
+urdf_model_path = "/home/haibo/vx300s_ws/src/vx300s_description/urdf/vx300s_fix.urdf"
+mesh_dir = "/home/haibo/vx300s_ws/src/vx300s_description/vx300s_meshes/"
 
-urdf_model_path = "/home/yc/vx300s-single-sim/src/vx300s_description/urdf/vx300s_fix.urdf"
-mesh_dir = "/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/"
+# urdf_model_path = "/home/yc/vx300s-single-sim/src/vx300s_description/urdf/vx300s_fix.urdf"
+# mesh_dir = "/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/"
 
 
 
