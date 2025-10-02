@@ -8,15 +8,16 @@ import numpy as np
 import pinocchio as pin
 
 from IK import get_angles
+import modern_robotics as mr
 
 
 # ====== Pinocchio model ======
-urdf_model_path = "/home/haibo/vx300s_ws/src/vx300s_description/urdf/vx300s_fix.urdf"
-mesh_dir = "/home/haibo/vx300s_ws/src/vx300s_description/vx300s_meshes/"
+# urdf_model_path = "/home/haibo/vx300s_ws/src/vx300s_description/urdf/vx300s_fix.urdf"
+# mesh_dir = "/home/haibo/vx300s_ws/src/vx300s_description/vx300s_meshes/"
 
 
-# urdf_model_path = "/home/yc/vx300s-single-sim/src/vx300s_description/urdf/vx300s_fix.urdf"
-# mesh_dir = "/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/"
+urdf_model_path = "/home/yc/vx300s-single-sim/src/vx300s_description/urdf/vx300s_fix.urdf"
+mesh_dir = "/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/"
 
 model, _, _ = pin.buildModelsFromUrdf(urdf_model_path, package_dirs=[mesh_dir])
 model.gravity = pin.Motion.Zero()
@@ -25,6 +26,16 @@ data = model.createData()
 
 target_joints = ["waist", "shoulder", "elbow", "forearm_roll", "wrist_angle", "wrist_rotate"]
 assert model.nv == len(target_joints)
+
+
+Slist = np.array([
+    [0.0, 0.0, 1.0,  0.0,      0.0,     0.0],
+    [0.0, 1.0, 0.0, -0.12705,  0.0,     0.0],
+    [0.0, 1.0, 0.0, -0.42705,  0.0,     0.05955],
+    [1.0, 0.0, 0.0,  0.0,      0.42705, 0.0],
+    [0.0, 1.0, 0.0, -0.42705,  0.0,     0.35955],
+    [1.0, 0.0, 0.0,  0.0,      0.42705, 0.0]
+]).T
 
 # ====== Utils ======
 def extract_by_name(msg_names, msg_vals, wanted_names):
@@ -69,41 +80,47 @@ class TrajectoryGenerator:
 
         elif self.mode == "circle":
             # 任务空间圆轨迹
+            roll, pitch, yaw = np.pi/2, 0.0, np.pi/2
             center = np.array([0.3, 0.3, 0.3])
             r, w = 0.1, 0.3
             pos = np.array([
                 center[0] + r * np.cos(w * t),
                 center[1] + r * np.sin(w * t),
-                center[2]
+                center[2],
+                roll,
+                pitch,
+                yaw
             ])
             vel = np.array([
                 -r * w * np.sin(w * t),
                  r * w * np.cos(w * t),
-                 0.0
+                 0.0,
+                 0.0,
+                 0.0,
+                 0.0,
             ])
             acc = np.array([
                 -r * w**2 * np.cos(w * t),
                 -r * w**2 * np.sin(w * t),
-                 0.0
+                 0.0,
+                 0.0,
+                 0.0,
+                 0.0,
             ])
 
-            roll, pitch, yaw = np.pi/2, 0.0, 0.0 
-
-            # 用数值 IK 把 pos 转换成 q_des
-            # q_guess = q_current.copy()
-            # pin.forwardKinematics(model, data, q_guess)
-            # pin.updateFramePlacements(model, data)
-            # oMf = data.oMf[self.ee_id]
-
-            # q_des = q_guess.copy()
-            # pin.inverseKinematics(model, data, self.ee_id, pin.SE3(np.eye(3), pos), q_guess, q_des)
+             
             j1, j2, j3, j4, j5, j6 = get_angles(pos[0], pos[1], pos[2], roll, pitch, yaw)
             q_des = np.array([j1, j2, j3, j4, j5, j6], dtype=float)
 
             # 速度 & 加速度用伪逆算
             J = pin.computeFrameJacobian(model, data, q_des, self.ee_id, pin.LOCAL_WORLD_ALIGNED)
-            qd_des  = np.linalg.pinv(J[:3, :]) @ vel
-            qdd_des = np.linalg.pinv(J[:3, :]) @ (acc - pin.getFrameClassicalAcceleration(model, data, self.ee_id, pin.LOCAL_WORLD_ALIGNED).linear)
+            # qd_des  = np.linalg.pinv(J[:3, :]) @ vel
+            # qdd_des = np.linalg.pinv(J[:3, :]) @ (acc - pin.getFrameClassicalAcceleration(model, data, self.ee_id, pin.LOCAL_WORLD_ALIGNED).linear)
+
+            # J = mr.JacobianSpace(Slist, q_des)
+
+            qd_des  = np.linalg.pinv(J) @ vel
+            qdd_des = np.linalg.pinv(J) @ (acc - pin.getFrameClassicalAcceleration(model, data, self.ee_id, pin.LOCAL_WORLD_ALIGNED))
             return q_des, qd_des, qdd_des
 
         else:
@@ -117,8 +134,8 @@ class JointSpaceController(Node):
         self.start_time = self.get_clock().now().nanoseconds * 1e-9
 
         # controller params
-        self.Kp = np.diag([50, 50, 40, 40, 30, 20])
-        self.Kd = np.diag([5,  5,  4,  20,  15, 15.5])
+        self.Kp = np.diag([50, 50, 40, 40, 50, 100])
+        self.Kd = np.diag([5,  5,  4,  20,  20, 50.5])
         self.D_visc = np.array([0.6, 0.8, 0.6, 0.15, 0.12, 0.12])
         self.tau_limit = np.array([10, 10, 10, 5, 4, 4])
 
@@ -146,11 +163,11 @@ class JointSpaceController(Node):
 
         # dynamics
         tau = pin.rnea(model, data, q, dq, qdd_ref)
-        tau -= self.D_visc * dq
-        tau = np.clip(tau, -self.tau_limit, self.tau_limit)
+        # tau -= self.D_visc * dq
+        # tau = np.clip(tau, -self.tau_limit, self.tau_limit)
 
         # log
-        self.get_logger().info(f"t={t:.2f}, q_des={q_des}, q={q}")
+        # self.get_logger().info(f"t={t:.2f}, q_des={q_des}, q={q}")
 
         # pub
         out = Float64MultiArray()
