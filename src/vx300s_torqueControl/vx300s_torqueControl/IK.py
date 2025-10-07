@@ -50,12 +50,12 @@ def get_last_three_angles(R):
 
 # ----------------- 限幅函数 -----------------
 def clamp_angle(angle_deg, min_deg, max_deg):
-    """将角度裁剪到[min_deg, max_deg]范围"""
+    """[min_deg, max_deg]"""
     if angle_deg < min_deg:
-        print(f"⚠️ 超出下限: {angle_deg:.2f}° → {min_deg}°")
+        print(f"⚠️ lower than min_deg: {angle_deg:.2f}° → {min_deg}°")
         return min_deg
     elif angle_deg > max_deg:
-        print(f"⚠️ 超出上限: {angle_deg:.2f}° → {max_deg}°")
+        print(f"⚠️ bigger than max_deg: {angle_deg:.2f}° → {max_deg}°")
         return max_deg
     return angle_deg
 

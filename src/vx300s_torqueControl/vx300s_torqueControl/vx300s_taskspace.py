@@ -31,6 +31,7 @@ from std_msgs.msg import Float64MultiArray
 import pinocchio as pin
 import numpy as np
 import modern_robotics as mr
+import time
 
 
 # ----------------- 机械臂参数 -----------------
@@ -52,12 +53,12 @@ M = np.array([
 
 
 # ----------------- Pinocchio model -----------------
-# urdf_model_path = "/home/haibo/vx300s_ws/src/vx300s_description/urdf/vx300s_fix.urdf"
-# mesh_dir = "/home/haibo/vx300s_ws/src/vx300s_description/vx300s_meshes/"
+urdf_model_path = "/home/haibo/vx300s_ws/src/vx300s_description/urdf/vx300s_fix.urdf"
+mesh_dir = "/home/haibo/vx300s_ws/src/vx300s_description/vx300s_meshes/"
 
 
-urdf_model_path = "/home/yc/vx300s-single-sim/src/vx300s_description/urdf/vx300s_fix.urdf"
-mesh_dir = "/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/"
+# urdf_model_path = "/home/yc/vx300s-single-sim/src/vx300s_description/urdf/vx300s_fix.urdf"
+# mesh_dir = "/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/"
 
 model, _, _ = pin.buildModelsFromUrdf(urdf_model_path, package_dirs=[mesh_dir])
 
@@ -78,72 +79,39 @@ def extract_by_name(msg_names, msg_vals, wanted_names):
 
 
 
-def trajectory_generator(t):
-    """生成包含平移和恒定角速度的往返轨迹 (6D)"""
-    # --- 平移部分 ---
+
+def trajectory_generator(t, T_total=10.0):
+    """生成 6D 五次多项式轨迹（task-space 控制）"""
+    # 起点与终点（笛卡尔空间）
     X_start = np.array([0.2, 0.4, 0.4])
     X_end   = np.array([0.6, 0.4, 0.4])
-    w = 5.5  # rad/s，往返频率
 
-    s      = 0.5 * (1 - np.cos(w * t))
-    s_dot  = 0.5 * w * np.sin(w * t)
-    s_ddot = 0.5 * w**2 * np.cos(w * t)
+    # 限制时间范围（防止溢出）
+    t_clip = np.clip(t, 0, T_total)
+    tau = t_clip / T_total
 
-    pos   = (1 - s) * X_start + s * X_end
-    vel   = s_dot * (X_end - X_start)
-    acc   = s_ddot * (X_end - X_start)
+    # ---- 五次多项式插值 ----
+    s      = 10*tau**3 - 15*tau**4 + 6*tau**5
+    s_dot  = (30*tau**2 - 60*tau**3 + 30*tau**4) / T_total
+    s_ddot = (60*tau - 180*tau**2 + 120*tau**3) / (T_total**2)
 
-    # --- 姿态部分（恒定） ---
-    rot_vec = np.array([0.0, 0.0, 0.0])
-    omega_const  = np.array([0.0, 0.0, 0.0])   # rad/s, 恒定角速度
+    # ---- 平移部分 ----
+    pos = (1 - s) * X_start + s * X_end
+    vel = s_dot  * (X_end - X_start)
+    acc = s_ddot * (X_end - X_start)
+
+    # ---- 姿态部分（恒定） ----
+    rot_vec = np.zeros(3)
+    omega_const  = np.zeros(3)
     domega_const = np.zeros(3)
 
-    # --- 合并成 6D ---
-    Xd    = np.hstack([rot_vec, pos])        # 期望状态 (位置+角度占位)
-    Xd_d  = np.hstack([omega_const, vel])        # 线速度+角速度
-    Xd_dd = np.hstack([domega_const, acc])       # 线加速度+角加速度
+    # ---- 合并成 6D ----
+    Xd    = np.hstack([rot_vec, pos])
+    Xd_d  = np.hstack([omega_const, vel])
+    Xd_dd = np.hstack([domega_const, acc])
 
     return Xd, Xd_d, Xd_dd
 
-
-# def trajectory_generator(t):
-#     """生成圆形轨迹 (6D)"""
-#     # --- 圆的参数 ---
-#     center = np.array([0.0, 0.0, 0.6])   # 圆心
-#     r = 0.4                               # 半径
-#     w = 0.5                               # 角频率 (rad/s)
-
-#     # --- 位置 ---
-#     pos = np.array([
-#         center[0] + r * np.cos(w * t),
-#         center[1] + r * np.sin(w * t),
-#         center[2]
-#     ])
-
-#     # --- 一阶导：速度 ---
-#     vel = np.array([
-#         -r * w * np.sin(w * t),
-#          r * w * np.cos(w * t),
-#          0.0
-#     ])
-
-#     # --- 二阶导：加速度 ---
-#     acc = np.array([
-#         -r * w**2 * np.cos(w * t),
-#         -r * w**2 * np.sin(w * t),
-#          0.0
-#     ])
-
-#     # --- 姿态部分（这里不转动，角速度为0） ---
-#     omega_const  = np.array([0.0, 0.0, 0.0])  # 恒定角速度
-#     domega_const = np.zeros(3)
-
-#     # --- 合并成 6D ---
-#     Xd    = np.hstack([np.zeros(3), pos])        # 期望状态 (位置+角度占位)
-#     Xd_d  = np.hstack([omega_const, vel])        # 线速度+角速度
-#     Xd_dd = np.hstack([domega_const, acc])       # 线加速度+角加速度
-
-#     return Xd, Xd_d, Xd_dd
 
 
 # ----------------- ROS2 节点 -----------------
@@ -157,8 +125,8 @@ class GravityCompNode(Node):
         self.tau_pub = self.create_publisher(Float64MultiArray, "/arm_controller/commands", 10)
 
         # 控制增益
-        self.Kp = np.diag([300.0, 300.0, 300.0, 60.0, 60.0, 60.0])
-        self.Kd = np.diag([5.0,   5.0,   5.0,   1.0,  1.0,  1.0])
+        self.Kp = np.diag([60.0, 60.0, 60.0, 40.0, 30.0, 20.0])
+        self.Kd = np.diag([50.0,   50.0,   50.0,   10.0,  10.0,  10.0])
 
         self.tau_limit = np.array([10, 10, 10, 5, 4, 4], dtype=float)
 
@@ -201,15 +169,15 @@ class GravityCompNode(Node):
         aX = Xd_dd + self.Kp @ e + self.Kd @ edot
 
         # 伪逆求解加速度
-        lam = 1e-3
-        JvJJ = J @ J.T
-        J_pinv = J.T @ np.linalg.inv(JvJJ + lam**2 * np.eye(6))
-        # J_pinv = np.linalg.pinv(J)
+
+        J_pinv = np.linalg.pinv(J)
         aq = J_pinv @ (aX - Jdot_qdot)
 
         # 动力学反算力矩
         tau = pin.rnea(model, data, q, dq, aq)
-        tau = np.clip(tau, -self.tau_limit, self.tau_limit)
+        
+        time.sleep(0.05)
+        
 
         # 发布力矩
         out = Float64MultiArray()
