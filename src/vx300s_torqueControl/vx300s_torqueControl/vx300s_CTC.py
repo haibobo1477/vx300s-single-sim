@@ -100,16 +100,56 @@ def generate_line_trajectory(t, T_total=6.0):
     return pos, vel, acc
 
 
+
+def generate_ellipse_trajectory(t, T_total=6.0):
+    """
+    生成一个平滑的椭圆轨迹:
+    - 椭圆中心: Pc
+    - 长轴在Y方向, 短轴在Z方向
+    - 周期: T_total
+    """
+
+    # --- 椭圆参数 ---
+    Pc = np.array([0.3, 0.2, 0.4])   # 椭圆中心点 (x固定)
+    a = 0.15                         # y方向半径
+    b = 0.05                         # z方向半径
+    roll, pitch, yaw = 0.0, np.pi/4, 0.0
+
+    # --- 时间参数 ---
+    omega = 2 * np.pi / T_total      # 角速度
+    theta = omega * t                # 当前角度 (0~2π 循环)
+
+    # --- 位置 ---
+    x = Pc[0]
+    y = Pc[1] + a * np.cos(theta)
+    z = Pc[2] + b * np.sin(theta)
+
+    # --- 一阶导（速度） ---
+    dx = 0.0
+    dy = -a * omega * np.sin(theta)
+    dz =  b * omega * np.cos(theta)
+
+    # --- 二阶导（加速度） ---
+    ddx = 0.0
+    ddy = -a * omega**2 * np.cos(theta)
+    ddz = -b * omega**2 * np.sin(theta)
+
+    pos = np.array([roll, pitch, yaw, x, y, z])
+    vel = np.array([0, 0, 0, dx, dy, dz])
+    acc = np.array([0, 0, 0, ddx, ddy, ddz])
+    return pos, vel, acc
+
+
 class TrajectorySimNode(Node):
     def __init__(self):
         super().__init__("trajectory_sim_node")
 
         # === Pinocchio 模型 ===
-        # urdf_model_path = "/home/yc/vx300s-single-sim/src/vx300s_description/urdf/vx300s_fix.urdf"
-        # mesh_dir = "/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/"
+        urdf_model_path = "/home/yc/vx300s-single-sim/src/vx300s_description/urdf/vx300s.urdf"
+        mesh_dir = "/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/"
         
-        urdf_model_path = "/home/haibo/vx300s_ws/src/vx300s_description/urdf/vx300s.urdf"
-        mesh_dir = "/home/haibo/vx300s_ws/src/vx300s_description/vx300s_meshes/"
+        # urdf_model_path = "/home/haibo/vx300s_ws/src/vx300s_description/urdf/vx300s.urdf"
+        # mesh_dir = "/home/haibo/vx300s_ws/src/vx300s_description/vx300s_meshes/"
         self.model, _, _ = pin.buildModelsFromUrdf(urdf_model_path, package_dirs=[mesh_dir])
         self.data = self.model.createData()
 
@@ -117,7 +157,7 @@ class TrajectorySimNode(Node):
         self.ee_id = self.model.getFrameId(self.ee_name)
 
         # === 控制参数 ===
-        self.Kp = np.diag([260, 260, 260, 1800, 250, 2200])
+        self.Kp = np.diag([460, 260, 260, 1000, 2500, 2000])
         self.Kd = np.diag([15, 15, 14, 13, 22, 25])
 
         self.joint_state_msg = None
@@ -126,6 +166,8 @@ class TrajectorySimNode(Node):
         # === 订阅Joint States ===
         self.create_subscription(JointState, "/joint_states", self.joint_state_callback, 10)
         self.tau_pub = self.create_publisher(Float64MultiArray, "/arm_controller/commands", 10)
+        self.pub_e   = self.create_publisher(Float64MultiArray, "/vx300s/e", 10)  # <--- 新增：发布误差 e
+
 
         # === 定时器(50Hz) ===
         self.timer = self.create_timer(0.01, self.timer_callback)
@@ -145,7 +187,7 @@ class TrajectorySimNode(Node):
         # print(t)
 
         # # === 五次多项式直线轨迹 ===
-        pos, vel, acc = generate_line_trajectory(t)
+        pos, vel, acc = generate_ellipse_trajectory(t)
         roll, pitch, yaw, x, y, z = pos
 
         # # === 数值逆运动学 ===
@@ -166,7 +208,7 @@ class TrajectorySimNode(Node):
         
         # # print(q_des)
 
-        # # print(q)
+        print(q)
         
         # # === 误差 ===
         e = q_des - q[:6]
@@ -175,10 +217,14 @@ class TrajectorySimNode(Node):
         qdd_ref_full = np.concatenate([qdd_ref, np.zeros(3)])
         q_full = np.concatenate([q, np.zeros(1)])
         
-        print(e)
+        # print(e)
+        e_msg = Float64MultiArray()
+        e_msg.data = e.tolist()
+        self.pub_e.publish(e_msg)
 
         # # === 计算动力学力矩 ===
         tau = pin.rnea(self.model, self.data, q_full, dq, qdd_ref_full)
+        # print(tau)
         
 
         msg_out = Float64MultiArray()
