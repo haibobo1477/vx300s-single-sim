@@ -103,42 +103,46 @@ def generate_line_trajectory(t, T_total=6.0):
 
 def generate_ellipse_trajectory(t, T_total=6.0):
     """
-    生成一个平滑的椭圆轨迹:
+    使用五次多项式生成平滑椭圆轨迹：
     - 椭圆中心: Pc
-    - 长轴在Y方向, 短轴在Z方向
-    - 周期: T_total
+    - 长轴 a 沿 Y 方向
+    - 短轴 b 沿 Z 方向
+    - 椭圆角度 θ(t) 用五次多项式平滑生成，保证速度与加速度连续
     """
 
-    # --- 椭圆参数 ---
-    Pc = np.array([0.3, 0.2, 0.4])   # 椭圆中心点 (x固定)
-    a = 0.15                         # y方向半径
-    b = 0.05                         # z方向半径
+    # === 椭圆参数 ===
+    Pc = np.array([0.3, 0.0, 0.3])  # 椭圆中心
+    a = 0.15                        # y方向半径
+    b = 0.05                        # z方向半径
     roll, pitch, yaw = 0.0, np.pi/4, 0.0
 
-    # --- 时间参数 ---
-    omega = 2 * np.pi / T_total      # 角速度
-    theta = omega * t                # 当前角度 (0~2π 循环)
+    # === 角度的五次多项式 θ(t) ===
+    #   θ(0)=0, θ'(0)=0, θ''(0)=0
+    #   θ(T)=2π, θ'(T)=0, θ''(T)=0
+    theta_coeffs = quintic_coeffs(0, 0, 0, 2*np.pi, 0, 0, T_total)
+    theta, dtheta, ddtheta = quintic_eval(theta_coeffs, t % T_total)
 
-    # --- 位置 ---
-    x = Pc[0]
-    y = Pc[1] + a * np.cos(theta)
-    z = Pc[2] + b * np.sin(theta)
+    # === 位置 ===
+    x = Pc[0] + a * np.cos(theta)
+    y = Pc[1] + b * np.sin(theta)
+    z = Pc[2] 
 
-    # --- 一阶导（速度） ---
+    # === 一阶导（速度） ===
     dx = 0.0
-    dy = -a * omega * np.sin(theta)
-    dz =  b * omega * np.cos(theta)
+    dy = -a * np.sin(theta) * dtheta
+    dz =  b * np.cos(theta) * dtheta
 
-    # --- 二阶导（加速度） ---
+    # === 二阶导（加速度） ===
     ddx = 0.0
-    ddy = -a * omega**2 * np.cos(theta)
-    ddz = -b * omega**2 * np.sin(theta)
+    ddy = -a * (np.cos(theta) * dtheta**2 + np.sin(theta) * ddtheta)
+    ddz =  b * (-np.sin(theta) * dtheta**2 + np.cos(theta) * ddtheta)
 
+    # === 合并 ===
     pos = np.array([roll, pitch, yaw, x, y, z])
     vel = np.array([0, 0, 0, dx, dy, dz])
     acc = np.array([0, 0, 0, ddx, ddy, ddz])
-    return pos, vel, acc
 
+    return pos, vel, acc
 
 class TrajectorySimNode(Node):
     def __init__(self):
