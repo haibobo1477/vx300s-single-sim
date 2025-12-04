@@ -13,7 +13,7 @@ from interbotix_xs_msgs.msg import JointGroupCommand
 from IK import get_angles
 import modern_robotics as mr
 
-# ====== 目标关节 ======
+# ======  ======
 target_joints = ["waist", "shoulder", "elbow", "forearm_roll", "wrist_angle", "wrist_rotate"]
 
 Slist = np.array([
@@ -31,7 +31,7 @@ def extract_by_name(msg_names, msg_vals, wanted_names):
     return np.array([m.get(n, 0.0) for n in wanted_names], dtype=float)
 
 
-# ===== 五次多项式函数 =====
+# =====  =====
 def quintic_coeffs(s0, v0, a0, sf, vf, af, T):
     A = np.array([
         [T**3,   T**4,    T**5],
@@ -54,9 +54,9 @@ def quintic_eval(coeffs, t):
     return s, ds, dds
 
 
-# ===== 椭圆轨迹生成函数 =====
+# ===== =====
 def generate_line_trajectory(t, T_total=13.0):
-    # 起点与终点
+    # 
     P0 = np.array([0.4, 0.2, 0.3])
     Pf = np.array([0.4, -0.2, 0.3])
     roll, pitch, yaw = 0.0, np.pi/4, 0.0
@@ -75,7 +75,7 @@ def generate_line_trajectory(t, T_total=13.0):
     else:
         s0, sf = 0, d
         direction = -1.0
-        t_local = t_mod - T_total  # 回程时间相对起点
+        t_local = t_mod - T_total  # 
 
     s_coeffs = quintic_coeffs(s0, 0, 0, sf, 0, 0, T_total)
     s, ds, dds = quintic_eval(s_coeffs, np.clip(t_local, 0, T_total))
@@ -97,42 +97,36 @@ def generate_line_trajectory(t, T_total=13.0):
 
 
 def generate_ellipse_trajectory(t, T_total=13.0):
-    """
-    使用五次多项式生成平滑椭圆轨迹：
-    - 椭圆中心: Pc
-    - 长轴 a 沿 Y 方向
-    - 短轴 b 沿 Z 方向
-    - 椭圆角度 θ(t) 用五次多项式平滑生成，保证速度与加速度连续
-    """
+  
 
-    # === 椭圆参数 ===
-    Pc = np.array([0.3, 0.0, 0.3])  # 椭圆中心
-    a = 0.15                        # y方向半径
-    b = 0.05                        # z方向半径
+    # ===  ===
+    Pc = np.array([0.3, 0.0, 0.3])  # 
+    a = 0.15                        # y
+    b = 0.05                        # z
     roll, pitch, yaw = 0.0, np.pi/4, 0.0
 
-    # === 角度的五次多项式 θ(t) ===
+    # ===  θ(t) ===
     #   θ(0)=0, θ'(0)=0, θ''(0)=0
     #   θ(T)=2π, θ'(T)=0, θ''(T)=0
     theta_coeffs = quintic_coeffs(0, 0, 0, 2*np.pi, 0, 0, T_total)
     theta, dtheta, ddtheta = quintic_eval(theta_coeffs, t % T_total)
 
-    # === 位置 ===
+    # ===  ===
     x = Pc[0] + a * np.cos(theta)
     y = Pc[1] + b * np.sin(theta)
     z = Pc[2] 
 
-    # === 一阶导（速度） ===
+    # ===  ===
     dx = 0.0
     dy = -a * np.sin(theta) * dtheta
     dz =  b * np.cos(theta) * dtheta
 
-    # === 二阶导（加速度） ===
+    # ===  ===
     ddx = 0.0
     ddy = -a * (np.cos(theta) * dtheta**2 + np.sin(theta) * ddtheta)
     ddz =  b * (-np.sin(theta) * dtheta**2 + np.cos(theta) * ddtheta)
 
-    # === 合并 ===
+    # === ===
     pos = np.array([roll, pitch, yaw, x, y, z])
     vel = np.array([0, 0, 0, dx, dy, dz])
     acc = np.array([0, 0, 0, ddx, ddy, ddz])
