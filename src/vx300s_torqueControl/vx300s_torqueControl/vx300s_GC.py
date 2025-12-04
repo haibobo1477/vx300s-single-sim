@@ -33,7 +33,7 @@ target_joints = ["waist", "shoulder", "elbow",
                  "forearm_roll", "wrist_angle", "wrist_rotate"]
 
 assert model.nv == len(target_joints), \
-    f"model.nv={model.nv} 与 target_joints 数量 {len(target_joints)} 不一致，请检查。"
+    f"model.nv={model.nv} and target_joints numbers {len(target_joints)} are different, recheck it"
 
 def extract_by_name(msg_names, msg_vals, wanted_names):
     m = dict(zip(msg_names, msg_vals)) if msg_vals is not None else {}

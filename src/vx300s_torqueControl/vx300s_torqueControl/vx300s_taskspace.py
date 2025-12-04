@@ -34,7 +34,7 @@ import modern_robotics as mr
 import time
 
 
-# ----------------- 机械臂参数 -----------------
+# ----------------------------------
 Slist = np.array([
     [0.0, 0.0, 1.0,  0.0,      0.0,     0.0],
     [0.0, 1.0, 0.0, -0.12705,  0.0,     0.0],
@@ -62,17 +62,17 @@ mesh_dir = "/home/haibo/vx300s_ws/src/vx300s_description/vx300s_meshes/"
 
 model, _, _ = pin.buildModelsFromUrdf(urdf_model_path, package_dirs=[mesh_dir])
 
-# 设置重力
+# 
 model.gravity = pin.Motion.Zero()
 model.gravity.linear = np.array([0.0, 0.0, -9.81])
 data = model.createData()
 
-# 目标关节
+# 
 target_joints = ["waist", "shoulder", "elbow", "forearm_roll", "wrist_angle", "wrist_rotate"]
 assert model.nv == len(target_joints), f"model.nv={model.nv} 与目标关节数 {len(target_joints)} 不一致"
 
 
-# ----------------- 工具函数 -----------------
+# -----------------  -----------------
 def extract_by_name(msg_names, msg_vals, wanted_names):
     m = dict(zip(msg_names, msg_vals)) if msg_vals is not None else {}
     return np.array([m.get(n, 0.0) for n in wanted_names], dtype=float)
@@ -81,31 +81,30 @@ def extract_by_name(msg_names, msg_vals, wanted_names):
 
 
 def trajectory_generator(t, T_total=10.0):
-    """生成 6D 五次多项式轨迹（task-space 控制）"""
-    # 起点与终点（笛卡尔空间）
+    # 
     X_start = np.array([0.2, 0.4, 0.4])
     X_end   = np.array([0.6, 0.4, 0.4])
 
-    # 限制时间范围（防止溢出）
+    # 
     t_clip = np.clip(t, 0, T_total)
     tau = t_clip / T_total
 
-    # ---- 五次多项式插值 ----
+    # ----  ----
     s      = 10*tau**3 - 15*tau**4 + 6*tau**5
     s_dot  = (30*tau**2 - 60*tau**3 + 30*tau**4) / T_total
     s_ddot = (60*tau - 180*tau**2 + 120*tau**3) / (T_total**2)
 
-    # ---- 平移部分 ----
+    # ----  ----
     pos = (1 - s) * X_start + s * X_end
     vel = s_dot  * (X_end - X_start)
     acc = s_ddot * (X_end - X_start)
 
-    # ---- 姿态部分（恒定） ----
+    # ----  ----
     rot_vec = np.zeros(3)
     omega_const  = np.zeros(3)
     domega_const = np.zeros(3)
 
-    # ---- 合并成 6D ----
+    # ---- 6D ----
     Xd    = np.hstack([rot_vec, pos])
     Xd_d  = np.hstack([omega_const, vel])
     Xd_dd = np.hstack([domega_const, acc])
@@ -114,7 +113,7 @@ def trajectory_generator(t, T_total=10.0):
 
 
 
-# ----------------- ROS2 节点 -----------------
+# ----------------- ROS2 -----------------
 class GravityCompNode(Node):
     def __init__(self):
         super().__init__("gravity_comp_node")
@@ -124,26 +123,25 @@ class GravityCompNode(Node):
         self.create_subscription(JointState, "/joint_states", self.joint_state_callback, 50)
         self.tau_pub = self.create_publisher(Float64MultiArray, "/arm_controller/commands", 10)
 
-        # 控制增益
+        # 
         self.Kp = np.diag([60.0, 60.0, 60.0, 40.0, 30.0, 20.0])
         self.Kd = np.diag([50.0,   50.0,   50.0,   10.0,  10.0,  10.0])
 
         self.tau_limit = np.array([10, 10, 10, 5, 4, 4], dtype=float)
 
-        # URDF 里定义的末端 frame 名字
+        # URDF in frame 
         self.ee_name = "vx300s/ee_gripper_link"
         self.ee_id = model.getFrameId(self.ee_name)
 
     def joint_state_callback(self, msg: JointState):
-        # 当前时间
+       
         t = self.get_clock().now().nanoseconds * 1e-9 - self.start_time
 
-        # 提取关节位置/速度
         q = extract_by_name(msg.name, msg.position, target_joints)
         dq = extract_by_name(msg.name, msg.velocity, target_joints)
         a_zero = np.zeros_like(dq)
 
-        # 正运动学
+       
         pin.forwardKinematics(model, data, q, dq, a_zero)
         pin.updateFramePlacements(model, data)
         oMf = data.oMf[self.ee_id]
@@ -151,40 +149,38 @@ class GravityCompNode(Node):
         X = np.hstack([np.zeros(3), Xp])
 
 
-        # 末端 Jacobian
+       
         J = mr.JacobianSpace(Slist, q)   # [w v]
         # Jv = J[3:6, :]
 
-        # 末端加速度项
         a_cl = pin.getFrameClassicalAcceleration(model, data, self.ee_id, pin.LOCAL_WORLD_ALIGNED)
         Jdot_qdot = np.hstack([a_cl.angular, a_cl.linear])
 
-        # 期望轨迹
         Xd, Xd_d, Xd_dd = trajectory_generator(t)
 
-        # 误差
+       
         e = Xd - X
         v = J @ dq
         edot = Xd_d - v
         aX = Xd_dd + self.Kp @ e + self.Kd @ edot
 
-        # 伪逆求解加速度
+       
 
         J_pinv = np.linalg.pinv(J)
         aq = J_pinv @ (aX - Jdot_qdot)
 
-        # 动力学反算力矩
+        
         tau = pin.rnea(model, data, q, dq, aq)
         
         time.sleep(0.05)
         
 
-        # 发布力矩
+        
         out = Float64MultiArray()
         out.data = tau.tolist()
         self.tau_pub.publish(out)
 
-        # 打印日志
+        
         self.get_logger().info(f"t={t:.2f}, pos={X}, Xd={Xd}, e={e}")
 
 

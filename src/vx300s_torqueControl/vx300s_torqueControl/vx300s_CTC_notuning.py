@@ -6,30 +6,17 @@ import numpy as np
 import pinocchio as pin
 from std_msgs.msg import Float64MultiArray
 
-from IK import get_angles  # IK function
-import modern_robotics as mr
-
-# ====== joint name ======
-target_joints = ["waist", "shoulder", "elbow", "forearm_roll", "wrist_angle", "wrist_rotate", "gripper", "left_finger", "right_finger"]
+from IK import get_angles 
 
 
-Slist = np.array([
-    [0.0, 0.0, 1.0,  0.0,      0.0,     0.0],
-    [0.0, 1.0, 0.0, -0.12705,  0.0,     0.0],
-    [0.0, 1.0, 0.0, -0.42705,  0.0,     0.05955],
-    [1.0, 0.0, 0.0,  0.0,      0.42705, 0.0],
-    [0.0, 1.0, 0.0, -0.42705,  0.0,     0.35955],
-    [1.0, 0.0, 0.0,  0.0,      0.42705, 0.0]
-]).T
-
-
+target_joints = ["waist", "shoulder", "elbow", "forearm_roll", "wrist_angle", "wrist_rotate"]
 
 def extract_by_name(msg_names, msg_vals, wanted_names):
-    """get info from JointState topic"""
+    """从JointState消息中提取指定关节顺序的角度或速度"""
     m = dict(zip(msg_names, msg_vals)) if msg_vals is not None else {}
     return np.array([m.get(n, 0.0) for n in wanted_names], dtype=float)
 
-# ===== quintic polynomial =====
+
 def quintic_coeffs(s0, v0, a0, sf, vf, af, T):
     A = np.array([
         [T**3,   T**4,    T**5],
@@ -52,37 +39,38 @@ def quintic_eval(coeffs, t):
     return s, ds, dds
 
 
-# ===== line traj generator =====
 def generate_line_trajectory(t, T_total=6.0):
-    # start point & final point
+   
     P0 = np.array([0.4, 0.2, 0.3])
     Pf = np.array([0.4, -0.2, 0.3])
     roll, pitch, yaw = 0.0, np.pi/4, 0.0
 
-    # path direction
+    
     dP = Pf - P0
     d = np.linalg.norm(dP)
     dP_dir = dP / d
 
-    # period
+    # 
     cycle_time = 2 * T_total
-    t_mod = t % cycle_time  
+    t_mod = t % cycle_time  # 
 
-    
+    # 
     if t_mod <= T_total:
-        # forward（P0 -> Pf）
+        # （P0 -> Pf）
         s0, sf = 0, d
         direction = 1.0
         t_local = t_mod
     else:
-        # inverse（Pf -> P0）
+        # （Pf -> P0）
         s0, sf = 0, d
         direction = -1.0
         t_local = t_mod - T_total  
 
+    # 
     s_coeffs = quintic_coeffs(s0, 0, 0, sf, 0, 0, T_total)
     s, ds, dds = quintic_eval(s_coeffs, np.clip(t_local, 0, T_total))
 
+    # 
     if direction > 0:
         Pd   = P0 + s  * dP_dir
         dPd  =      ds * dP_dir
@@ -92,24 +80,18 @@ def generate_line_trajectory(t, T_total=6.0):
         dPd  = -    ds * dP_dir
         ddPd = -   dds * dP_dir
 
-    pos = np.concatenate(([roll, pitch, yaw], Pd))
-    vel = np.concatenate(([0, 0, 0], dPd))
-    acc = np.concatenate(([0, 0, 0], ddPd))
+    pos = np.concatenate((Pd, [roll, pitch, yaw]))
+    vel = np.concatenate((dPd, [0, 0, 0]))
+    acc = np.concatenate((ddPd, [0, 0, 0]))
     return pos, vel, acc
 
 
-
-def generate_ellipse_trajectory(t, T_total=10.0):
-    """
-    - ellipse center: Pc
-    - Major axis a along Y-axis
-    - minor axis b along Z-axis
-    - θ(t) with quintic
-    """
-
+def generate_ellipse_trajectory(t, T_total=6.0):
+    
+    #
     Pc = np.array([0.3, 0.0, 0.3])  
-    a = 0.15                       
-    b = 0.05                      
+    a = 0.15                        
+    b = 0.05                        
     roll, pitch, yaw = 0.0, np.pi/4, 0.0
 
     # === θ(t) ===
@@ -140,15 +122,16 @@ def generate_ellipse_trajectory(t, T_total=10.0):
 
     return pos, vel, acc
 
+
 class TrajectorySimNode(Node):
     def __init__(self):
         super().__init__("trajectory_sim_node")
 
         # === Pinocchio model ===
-        urdf_model_path = "/home/yc/vx300s-single-sim/src/vx300s_description/urdf/vx300s.urdf"
+        urdf_model_path = "/home/yc/vx300s-single-sim/src/vx300s_description/urdf/vx300s_fix.urdf"
         mesh_dir = "/home/yc/vx300s-single-sim/src/vx300s_description/vx300s_meshes/"
         
-        # urdf_model_path = "/home/haibo/vx300s_ws/src/vx300s_description/urdf/vx300s.urdf"
+        # urdf_model_path = "/home/haibo/vx300s_ws/src/vx300s_description/urdf/vx300s_fix.urdf"
         # mesh_dir = "/home/haibo/vx300s_ws/src/vx300s_description/vx300s_meshes/"
         self.model, _, _ = pin.buildModelsFromUrdf(urdf_model_path, package_dirs=[mesh_dir])
         self.data = self.model.createData()
@@ -156,43 +139,22 @@ class TrajectorySimNode(Node):
         self.ee_name = "vx300s/ee_gripper_link"
         self.ee_id = self.model.getFrameId(self.ee_name)
 
-        # === control ===
-        # self.Kp = np.diag([460, 260, 260, 1000, 2500, 2000])
-        # self.Kp = np.diag([28, 25, 14, 13, 16, 13])
-        # self.Kd = np.diag([15, 15, 14, 13, 22, 25])
-        # self.Ki = np.diag([3.5, 5.5, 2.5, 3, 5, 8])
-        self.Kp = np.diag([22, 21, 22, 30, 22, 30])
-        self.Ki = np.diag([3.0, 4.0, 2.0, 2.5, 3.0, 2.5])
-        
-
-
-        # ===== Auto-tuning params (per-joint) =====
-        self.n = 6
-        self.Omega = 0.02                 # |s|
-        self.gamma = 2.8                 #  I/gamma^2 
-        self.Gamma = np.array([0.030, 0.030, 0.030, 0.035, 0.025, 0.035], dtype=float) 
-        self.Khat_diag = np.zeros(6, dtype=float)  
-        # self.Khat_max = np.array([400, 400, 400, 300, 250, 250], dtype=float)     # max(optional)
-        self.Khat = np.diag(self.Khat_diag)
-
-        # self.eint_max = np.array([0.4, 0.4, 0.4, 0.2, 0.2, 0.2], dtype=float)
-
-
+        #
+        self.Kp = np.diag([260, 260, 260, 250, 250, 300])
+        self.Kd = np.diag([55, 55, 54, 43, 32, 45])
+        # self.Kp = np.diag([300, 300, 295, 285, 270, 320])
+        # self.Kd = np.diag([60, 60, 58, 48, 36, 50])
 
         self.joint_state_msg = None
         self.start_time = self.get_clock().now().nanoseconds * 1e-9
-        self.prev_time = self.start_time
-        self.e_int = np.zeros(6)
 
         # === Joint States ===
         self.create_subscription(JointState, "/joint_states", self.joint_state_callback, 10)
         self.tau_pub = self.create_publisher(Float64MultiArray, "/arm_controller/commands", 10)
-        self.pub_e   = self.create_publisher(Float64MultiArray, "/vx300s/e", 10)  
-        self.pub_Khat = self.create_publisher(Float64MultiArray, "/vx300s/Khat", 10)   
+        self.pub_e   = self.create_publisher(Float64MultiArray, "/vx300s/e", 10)
 
         self.pub_q_des = self.create_publisher(Float64MultiArray, "/vx300s/q_des", 10)
         self.pub_q     = self.create_publisher(Float64MultiArray, "/vx300s/q", 10)
-
 
         # === timer(50Hz) ===
         self.timer = self.create_timer(0.01, self.timer_callback)
@@ -204,25 +166,21 @@ class TrajectorySimNode(Node):
         if self.joint_state_msg is None:
             return
 
-        t_now = self.get_clock().now().nanoseconds * 1e-9
-        dt = t_now - self.prev_time
-        self.prev_time = t_now
-
+        t = self.get_clock().now().nanoseconds * 1e-9 - self.start_time
         q = extract_by_name(self.joint_state_msg.name, self.joint_state_msg.position, target_joints)
         dq = extract_by_name(self.joint_state_msg.name, self.joint_state_msg.velocity, target_joints)
-        # print(q[:6])
         
         # print(t)
 
-        #  === traj ===
-        # pos, vel, acc = generate_ellipse_trajectory(t_now - self.start_time)
-        pos, vel, acc = generate_line_trajectory(t_now - self.start_time)
+        #
+        # pos, vel, acc = generate_line_trajectory(t)
+        pos, vel, acc = generate_ellipse_trajectory(t)
+        # x, y, z, roll, pitch, yaw = pos
         roll, pitch, yaw, x, y, z = pos
 
-        # # === IK analysis ===
+        # === IK ===
         j1, j2, j3, j4, j5, j6 = get_angles(x, y, z, roll, pitch, yaw)
         q_des = np.array([j1, j2, j3, j4, j5, j6], dtype=float)
-
 
         msg_q_des = Float64MultiArray()
         msg_q_des.data = q_des.tolist()
@@ -232,66 +190,43 @@ class TrajectorySimNode(Node):
         msg_q.data = q[:6].tolist()   
         self.pub_q.publish(msg_q)
 
-
-
-        print(x,y,z)
-
-        # # === inverse jacobian===
-        J = mr.JacobianSpace(Slist, q_des) 
+        #
+        J = pin.computeFrameJacobian(self.model, self.data, q_des, self.ee_id, pin.LOCAL_WORLD_ALIGNED)
         J_pinv = np.linalg.pinv(J)
         # print(J_pinv.shape)
         
         a_cl = pin.getFrameClassicalAcceleration(self.model, self.data, self.ee_id, pin.LOCAL_WORLD_ALIGNED)
-        Jdot_qdot = np.hstack([a_cl.angular, a_cl.linear])
-        # print(Jdot_qdot)
+        Jdot_qdot = np.hstack([a_cl.linear, a_cl.angular])
         
         qd_des  = J_pinv @ vel
         qdd_des = J_pinv @ (acc - Jdot_qdot)
         
-        # # print(q_des)
-
+        # print(q_des)
+        
         # print(q)
         
-        # # === error ===
-        e = q_des - q[:6]
-        edot = qd_des - dq[:6]
-        self.e_int += e * dt
+        # === error ===
+        e = q_des - q
+        edot = qd_des - dq
+        qdd_ref = qdd_des + self.Kp @ e + self.Kd @ edot
         
-        s = edot + self.Kp @ e + self.Ki @ self.e_int
-        
-        # qdd_ref = qdd_des + self.Kp @ e + self.Kd @ edot
-        # qdd_ref = qdd_des + self.Kp @ e + self.Kd @ edot + self.Ki @ self.e_int
-
-        thresh = self.Omega / np.sqrt(2.0 * self.n)   # adaptive tuning
-        for i in range(self.n):
-            if abs(s[i]) > thresh:
-                self.Khat_diag[i] += self.Gamma[i] * (s[i]**2) * dt
-        
-        # self.Khat_diag = np.clip(self.Khat_diag, 0.0, self.Khat_max)
-        self.Khat = np.diag(self.Khat_diag)
-
-        qdd_ref = qdd_des + (self.Khat + (1.0 / (self.gamma**2)) * np.eye(self.n)) @ s
-
-        qdd_ref_full = np.concatenate([qdd_ref, np.zeros(3)])
-        q_full = np.concatenate([q, np.zeros(1)])
-        
-        # print(e)
+        print(e)
         e_msg = Float64MultiArray()
         e_msg.data = e.tolist()
         self.pub_e.publish(e_msg)
 
-        msg_K = Float64MultiArray()
-        msg_K.data = self.Khat_diag.tolist()
-        self.pub_Khat.publish(msg_K)  
+        # === CTC ===
+        tau = pin.rnea(self.model, self.data, q, dq, qdd_ref)
 
-        # # === torque ===
-        tau = pin.rnea(self.model, self.data, q_full, dq, qdd_ref_full)
-        # print(tau)
-        
+
         msg_out = Float64MultiArray()
-        msg_out.data = tau[:6].tolist() 
+        msg_out.data = tau.tolist()
         self.tau_pub.publish(msg_out)
 
+        # === log ===
+        # self.get_logger().info(
+        #         f"t={t:.2f}s | pos={np.round(pos[:3],3)} | q_des={np.round(q_des,3)} | tau={np.round(tau,2)}"
+        #     )
 
 
 def main(args=None):
@@ -308,5 +243,3 @@ def main(args=None):
 
 if __name__ == "__main__":
     main()
-
-

@@ -11,7 +11,7 @@
     <!-- Waist -->
     <joint name="waist">
       <command_interface name="effort">
-        <param name="min">-10</param>
+        <param name="min">0</param>
         <param name="max">10</param>
       </command_interface>
       <state_interface name="position"/>
@@ -22,7 +22,7 @@
     <!-- Shoulder -->
     <joint name="shoulder">
       <command_interface name="effort">
-        <param name="min">-20</param>
+        <param name="min">0</param>
         <param name="max">20</param>
       </command_interface>
       <state_interface name="position"/>
@@ -33,7 +33,7 @@
     <!-- Elbow -->
     <joint name="elbow">
       <command_interface name="effort">
-        <param name="min">-15</param>
+        <param name="min">0</param>
         <param name="max">15</param>
       </command_interface>
       <state_interface name="position"/>
@@ -44,7 +44,7 @@
     <!-- Forearm roll -->
     <joint name="forearm_roll">
       <command_interface name="effort">
-        <param name="min">-2</param>
+        <param name="min">0</param>
         <param name="max">2</param>
       </command_interface>
       <state_interface name="position"/>
@@ -55,7 +55,7 @@
     <!-- Wrist angle -->
     <joint name="wrist_angle">
       <command_interface name="effort">
-        <param name="min">-5</param>
+        <param name="min">0</param>
         <param name="max">5</param>
       </command_interface>
       <state_interface name="position"/>
@@ -66,7 +66,7 @@
     <!-- Wrist rotate -->
     <joint name="wrist_rotate">
       <command_interface name="effort">
-        <param name="min">-1</param>
+        <param name="min">0</param>
         <param name="max">1</param>
       </command_interface>
       <state_interface name="position"/>
@@ -93,7 +93,7 @@
         <param name="max">1.0</param>
       </command_interface>
       <command_interface name="effort">
-        <param name="min">-5</param>
+        <param name="min">0</param>
         <param name="max">5</param>
       </command_interface>
       <state_interface name="position"/>
@@ -104,7 +104,7 @@
     <!-- Right finger -->
     <joint name="right_finger">
       <command_interface name="position">
-        <param name="min">-0.057</param>
+        <param name="min">0</param>
         <param name="max">-0.021</param>
       </command_interface>
       <command_interface name="velocity">
@@ -112,7 +112,7 @@
         <param name="max">1.0</param>
       </command_interface>
       <command_interface name="effort">
-        <param name="min">-5</param>
+        <param name="min">0</param>
         <param name="max">5</param>
       </command_interface>
       <state_interface name="position"/>
