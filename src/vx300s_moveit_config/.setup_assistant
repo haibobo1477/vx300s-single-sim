@@ -1,0 +1,25 @@
+moveit_setup_assistant_config:
+  urdf:
+    package: vx300s_description
+    relative_path: urdf/vx300s_moveit.urdf.xacro
+  srdf:
+    relative_path: config/vx300s.srdf
+  package_settings:
+    author_name: haibo
+    author_email: zhaohaibo177417@gmail.com
+    generated_timestamp: 1770302845
+  control_xacro:
+    command:
+      - position
+    state:
+      - position
+      - velocity
+  modified_urdf:
+    xacros:
+      - control_xacro
+  control_xacro:
+    command:
+      - position
+    state:
+      - position
+      - velocity
